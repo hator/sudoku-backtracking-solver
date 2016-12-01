@@ -10,9 +10,11 @@ import           Data.List hiding (group, product, transpose)
 import           Data.Maybe
 import           Control.Applicative (liftA2)
 import           Control.Monad (join)
-import           "data-ordlist" Data.List.Ordered
 import           "matrix" Data.Matrix hiding (trace)
 import qualified "matrix" Data.Matrix as Matrix
+import qualified "vector" Data.Vector as V
+import qualified "vector-algorithms" Data.Vector.Algorithms.Insertion as Insertion
+
 
 type Sudoku = Matrix (Maybe Int)
 type Cell = (Int,Int)
@@ -52,7 +54,7 @@ solveCell sudoku cells cell (v:vs) =
 
 tryInserting :: Sudoku -> Cell -> Value -> Maybe Sudoku
 tryInserting sudoku cell value =
-  if checkSudoku newSudoku
+  if checkUnits cell newSudoku
     then Just newSudoku
     else Nothing
   where
@@ -65,38 +67,54 @@ tryInserting sudoku cell value =
     updateCell x Nothing = Just x
     updateCell _ j = j
 
-checkSudoku :: Sudoku -> Bool
-checkSudoku sudoku =
+checkUnits :: Cell -> Sudoku -> Bool
+checkUnits (x,y) sudoku =
   let
-    rows = toLists sudoku
-    cols = toLists $ transpose sudoku
-    boxes = map toList $ toBoxes sudoku
-  in [rows, cols, boxes]
-    |> map (map checkUnit)
-    |> concat
-    |> all (True ==)
+    row = getRow x sudoku
+    col = getCol y sudoku
+    box = getMatrixAsVector $ getBox (x,y) sudoku
+  in [row, col, box]
+    |> map checkUnit
+    |> and -- are all elements true?
 
-allBoxesCoords :: [(Cell, Cell)]
-allBoxesCoords = product coords coords
-  where coords = [(1,3), (4,6), (7,9)]
+getBox :: Show a => (Int,Int) -> Matrix a -> Matrix a
+getBox (x,y) = submatrix x1 x2 y1 y2
+  where
+    x1 = (x - 1) `div` 3 * 3 + 1
+    x2 = x1 + 2
+    y1 = (y - 1) `div` 3 * 3 + 1
+    y2 = y1 + 2
 
-toBoxes :: Matrix a -> [Matrix a]
-toBoxes sudoku =
-  for allBoxesCoords $
-    uncurry $ uncurry.uncurry submatrixSudoku
-  where submatrixSudoku a b c d = submatrix a b c d sudoku
-
-checkUnit :: [Maybe Value] -> Bool
+{- | Checks if given vector is a proper sudoku unit (row, col or box)
+  >>> checkUnit $ V.fromList [Just 1, Just 2, Just 3, Nothing]
+  True
+  >>> checkUnit $ V.fromList [Just 1, Just 1, Nothing, Just 2]
+  False
+-}
+checkUnit :: V.Vector (Maybe Value) -> Bool
 checkUnit unit =
     noDuplicates && withinRange
     where
         -- values are known to contain at least 1 element (the one that we are trying to insert)
         values =
             unit
-            |> filter isJust
-            |> map fromJust
-            |> sort
+            |> V.filter isJust
+            |> V.map fromJust
+            |> V.modify Insertion.sort
         {-# INLINE noDuplicates #-}
         noDuplicates = isSortedBy (<) values -- strictly ascending => no duplicates
-        withinRange = last values <= 9 && head values >= 1
+        withinRange = V.last values <= 9 && V.head values >= 1
+
+{- | Tests if a vector is sorted by a given function.
+  >>> isSortedBy (<) $ V.fromList [1,2,3,5,9]
+  True
+  >>> isSortedBy (<) $ V.fromList [4,3,2,1]
+  False
+  >>> isSortedBy (<) $ V.fromList [1,1,2,2,3]
+  False
+  >>> isSortedBy (<) $ V.fromList []
+  True
+-}
+isSortedBy :: (Num a) => (a -> a -> Bool) -> V.Vector a -> Bool
+isSortedBy lte = fst . V.foldl' (\(a,x) y -> (a && x `lte` y, y)) (True, 0)
 
