@@ -6,7 +6,7 @@ module ListSolver
 
 import           Data.List hiding (group)
 import           "data-ordlist" Data.List.Ordered
-import           Control.Monad (forM, foldM)
+import           Control.Monad (join)
 import           Data.Maybe
 import           "lens" Control.Lens.At
 import           "lens" Control.Lens.Operators ((&), (^?!))
@@ -23,8 +23,8 @@ type Sudoku = List (Maybe Int)
 type Cell = Int
 type Value = Int
 
-solve :: Sudoku -> Maybe Sudoku
-solve sudoku = solve' sudoku [0..80]
+solve :: Sudoku -> Maybe [Int]
+solve sudoku = join $ sequence <$> solve' sudoku [0..80]
 
 solve' :: Sudoku -> List Cell -> Maybe Sudoku
 solve' sudoku [] = Just sudoku

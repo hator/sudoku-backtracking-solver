@@ -9,7 +9,7 @@ import           Prelude hiding (product)
 import           Data.List hiding (group, product, transpose)
 import           Data.Maybe
 import           Control.Applicative (liftA2)
-import           Control.Monad (forM, foldM)
+import           Control.Monad (join)
 import           "data-ordlist" Data.List.Ordered
 import           "matrix" Data.Matrix hiding (trace)
 import qualified "matrix" Data.Matrix as Matrix
@@ -27,14 +27,14 @@ for = flip map
 {-# INLINE product #-}
 product = liftA2 (,)
 
-sudokuFromList :: [Maybe Int] -> Sudoku
+sudokuFromList :: [a] -> Matrix a
 sudokuFromList = fromList 9 9
 
 allCells :: [Cell]
 allCells = product [1..9] [1..9]
 
-solve :: Sudoku -> Maybe Sudoku
-solve sudoku = solve' sudoku allCells
+solve :: Sudoku -> Maybe (Matrix Int)
+solve sudoku = join $ sequence <$> solve' sudoku allCells
 
 solve' :: Sudoku -> [Cell] -> Maybe Sudoku
 solve' sudoku [] = Just sudoku

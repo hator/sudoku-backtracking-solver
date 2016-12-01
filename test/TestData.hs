@@ -30,8 +30,8 @@ testSudoku1 = map zeroToNothing
   , 2,3,8, 5,7,9, 4,0,0
   ]
 
-testSudoku1Answer :: (Num n, Eq n) => [Maybe n]
-testSudoku1Answer = map return
+testSudoku1Answer :: (Num n, Eq n) => [n]
+testSudoku1Answer =
   [ 7,2,6, 4,9,3, 8,1,5
   , 3,1,5, 7,2,8, 9,4,6
   , 4,8,9, 6,5,1, 2,3,7
@@ -62,8 +62,8 @@ testSudoku2 = map zeroToNothing
   , 4,9,0, 0,5,0, 0,0,3
   ]
 
-testSudoku2Answer :: (Num n, Eq n) => [Maybe n]
-testSudoku2Answer = map return
+testSudoku2Answer :: (Num n, Eq n) => [n]
+testSudoku2Answer =
   [ 5,1,3, 6,8,7, 2,4,9
   , 8,4,9, 5,2,1, 6,3,7
   , 2,6,7, 3,4,9, 5,8,1
@@ -94,8 +94,8 @@ testSudoku3 = map zeroToNothing
   , 3,0,0, 1,0,0, 0,6,0
   ]
 
-testSudoku3Answer :: (Num n, Eq n) => [Maybe n]
-testSudoku3Answer = map return
+testSudoku3Answer :: (Num n, Eq n) => [n]
+testSudoku3Answer =
   [ 2,9,6, 3,1,8, 5,7,4
   , 5,8,4, 9,7,2, 6,1,3
   , 7,1,3, 6,4,5, 2,8,9
@@ -126,8 +126,8 @@ testSudoku4 = map zeroToNothing
   , 0,4,0, 0,0,0, 3,0,0
   ]
 
-testSudoku4Answer :: (Num n, Eq n) => [Maybe n]
-testSudoku4Answer = map return
+testSudoku4Answer :: (Num n, Eq n) => [n]
+testSudoku4Answer =
   [ 2,6,4, 7,1,5, 8,3,9
   , 1,3,7, 8,9,2, 6,4,5
   , 5,9,8, 4,3,6, 2,7,1
