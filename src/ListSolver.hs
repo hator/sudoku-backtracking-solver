@@ -45,41 +45,48 @@ solveCell sudoku cells cell (v:vs) =
     tryInserting sudoku cell value =
       let newSudoku = sudoku & ix cell %~ updateCell value
       in
-        if checkSudoku newSudoku
+        if checkUnits cell newSudoku
           then Just newSudoku
           else Nothing
     updateCell :: Int -> Maybe Int -> Maybe Int
     updateCell x Nothing = Just x
     updateCell _ _ = error "Should never update a already fixed cell"
 
-checkSudoku :: Sudoku -> Bool
-checkSudoku sudoku =
+checkUnits :: Cell -> Sudoku -> Bool
+checkUnits cell sudoku =
   let
-    rows = chunksOf 9 sudoku
-    cols = transpose rows
-    boxes = toBoxes rows
-  in [rows, cols, boxes]
-    |> map (map checkUnit)
-    |> concat
-    |> all (True ==)
+    row = getRow cell sudoku
+    col = getCol cell sudoku
+    box = getBox cell sudoku
+  in [row, col, box]
+    |> map checkUnit
+    |> and -- check if all are True
 
-toBoxes :: List (List a) -> List (List a)
-toBoxes sudoku =
-  sudoku
-  |> map (chunksOf 3)
-  |> concat
-  |> group
-  |> map concat
+getRow :: Cell -> Sudoku -> [Maybe Int]
+getRow cell = take 9 . drop (cell `div` 9 * 9)
 
-group :: List a -> List (List a)
-group list = group_ list [] [] [] []
-group_ qs xs ys zs result =
-  case qs of
-    [] -> xs:ys:zs:result
-    q:qs ->
-      if length xs == 3
-        then group_ qs zs [q] ys (xs:result)
-        else group_ qs zs (q:xs) ys result
+getCol :: Cell -> Sudoku -> [Maybe Int]
+getCol cell = everynth 9 . drop (cell `mod` 9)
+
+getBox :: Cell -> Sudoku -> [Maybe Int]
+getBox cell sudoku = leftCol ++ midCol ++ rightCol
+  where
+    rightCol = takeCol $ drop 2 leftColSudoku
+    midCol   = takeCol $ drop 1 leftColSudoku
+    leftCol  = takeCol leftColSudoku
+    takeCol = take 3 . everynth 9
+    leftColSudoku = drop leftPad topRowSudoku
+    topRowSudoku = drop (rblockNum * 3 * 9) sudoku
+    leftPad = cblockNum * 3
+    rblockNum = rownum `div` 3
+    cblockNum = colnum `div` 3
+    (rownum, colnum) = cell `divMod` 9
+
+-- every nth element starting from first
+everynth :: Int -> [a] -> [a]
+everynth n [] = []
+everynth n (x:xs) = x : everynth n (drop (n-1) xs)
+
 
 checkUnit :: List (Maybe Value) -> Bool
 checkUnit unit =
